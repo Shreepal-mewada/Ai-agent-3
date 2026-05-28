@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: aws-node
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: aws-node
+  template:
+    metadata:
+      labels:
+        k8s-app: aws-node
+    spec:
+      containers:
+        - name: aws-node
+          env:
+            - name: ENABLE_PREFIX_DELEGATION
+              value: "true"
