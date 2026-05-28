@@ -22,7 +22,7 @@ export async function createPod(sandboxId, projectId) {
                     name: 'init-container',
                     image: "template",
                     imagePullPolicy: "IfNotPresent",
-                    command: [ 'sh', '-c', 'cp -r /workspace/. /seed/' ],
+                    command: ['sh', '-c', 'cp -r /workspace/. /seed/'],
                     volumeMounts: [
                         {
                             name: 'workspace-volume',
@@ -36,7 +36,7 @@ export async function createPod(sandboxId, projectId) {
                     image: "template",
                     imagePullPolicy: "IfNotPresent",
                     name: 'sandbox-container',
-                    ports: [ { containerPort: 5173, name: "http" } ],
+                    ports: [{ containerPort: 5173, name: "http" }],
                     resources: {
                         limits: { cpu: "500m", memory: "1Gi" },
                         requests: { cpu: "250m", memory: "500Mi" }
@@ -52,7 +52,7 @@ export async function createPod(sandboxId, projectId) {
                     image: "agent",
                     imagePullPolicy: "IfNotPresent",
                     name: 'agent-container',
-                    ports: [ { containerPort: 3000, name: "http" } ],
+                    ports: [{ containerPort: 3000, name: "http" }],
                     resources: {
                         limits: { cpu: "500m", memory: "1Gi" },
                         requests: { cpu: "250m", memory: "500Mi" }
@@ -68,7 +68,7 @@ export async function createPod(sandboxId, projectId) {
                     image: "sync-agent",
                     imagePullPolicy: "IfNotPresent",
                     name: 'sync-agent-container',
-                    ports: [ { containerPort: 4000, name: "http" } ],
+                    ports: [{ containerPort: 4000, name: "http" }],
                     resources: {
                         limits: { cpu: "500m", memory: "1Gi" },
                         requests: { cpu: "250m", memory: "500Mi" }

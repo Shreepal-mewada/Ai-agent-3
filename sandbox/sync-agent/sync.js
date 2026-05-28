@@ -13,7 +13,7 @@ const s3Client = new S3Client({
 });
 
 const projectId = process.env.PROJECT_ID;
-const bucketName = "cohort-codespace-bucket-shree";
+const bucketName = "shree-bucket-aiii";
 const localDirectory = '/workspace';
 
 async function checkS3ForFiles() {
