@@ -4,6 +4,23 @@ import { HeroSection } from './landing/HeroSection'
 import { Button } from './ui/button'
 import { Plus, Terminal, RefreshCw, Layers, User, ArrowRight, Play, Loader2, LogIn } from 'lucide-react'
 
+const getFormattedDate = (updatedAt, createdAt) => {
+  const d = updatedAt || createdAt;
+  if (!d) return 'Recently';
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return 'Recently';
+  
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function SplashScreen({ onSandboxCreated }) {
   // Auth state
   const [user, setUser] = useState(null)
@@ -113,7 +130,7 @@ export default function SplashScreen({ onSandboxCreated }) {
     }
   }
 
-  // Open an existing project sandbox
+  // Open an existing project
   const handleOpenProject = async (projectId) => {
     setLoadingProjectId(projectId)
     setError(null)
@@ -124,16 +141,16 @@ export default function SplashScreen({ onSandboxCreated }) {
         credentials: 'include',
         body: JSON.stringify({ projectId })
       })
-      if (!sandboxRes.ok) throw new Error(`Failed to start sandbox (${sandboxRes.status})`)
+      if (!sandboxRes.ok) throw new Error(`Failed to start project (${sandboxRes.status})`)
       const sandboxData = await sandboxRes.json()
       onSandboxCreated(sandboxData)
     } catch (err) {
-      setError(err.message || 'Failed to start sandbox')
+      setError(err.message || 'Failed to start project')
       setLoadingProjectId(null)
     }
   }
 
-  // Create new project then start sandbox
+  // Create new project then start environment
   const handleCreate = async () => {
     const projectTitle = title.trim()
     if (!projectTitle) {
@@ -155,7 +172,7 @@ export default function SplashScreen({ onSandboxCreated }) {
       const projectData = await projectRes.json()
       const projectId = projectData.project._id
 
-      // Step 2: Start the sandbox
+      // Step 2: Start the project environment
       setLoadingStep('sandbox')
       const sandboxRes = await fetch('/api/sandbox/start', {
         method: 'POST',
@@ -163,11 +180,11 @@ export default function SplashScreen({ onSandboxCreated }) {
         credentials: 'include',
         body: JSON.stringify({ projectId })
       })
-      if (!sandboxRes.ok) throw new Error(`Failed to start sandbox (${sandboxRes.status})`)
+      if (!sandboxRes.ok) throw new Error(`Failed to start project (${sandboxRes.status})`)
       const sandboxData = await sandboxRes.json()
       onSandboxCreated(sandboxData)
     } catch (err) {
-      setError(err.message || 'Failed to create sandbox')
+      setError(err.message || 'Failed to create project')
       setLoading(false)
       setLoadingStep('')
     }
@@ -176,7 +193,7 @@ export default function SplashScreen({ onSandboxCreated }) {
   const isAnyLoading = loading || loadingProjectId !== null
 
   return (
-    <div className="relative min-h-screen bg-background overflow-x-hidden noise-overlay flex flex-col justify-between">
+    <div className="relative min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-100/20 via-background to-stone-100/30 overflow-x-hidden noise-overlay flex flex-col justify-between">
       <Navigation
         user={user}
         onLogin={handleLogin}
@@ -201,41 +218,46 @@ export default function SplashScreen({ onSandboxCreated }) {
           /* Show Developer Workspace Dashboard directly when logged in */
           <div className="max-w-[1400px] w-full mx-auto px-6 lg:px-12 py-12 animate-fadeIn">
             <div className="mb-10">
-              <span className="inline-flex items-center gap-3 text-sm font-mono text-muted-foreground mb-4">
-                <span className="w-8 h-px bg-foreground/30" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-600/10 text-amber-800 border border-amber-600/20 mb-4 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
                 Developer Workspace
               </span>
               <h2 className="text-4xl lg:text-5xl font-display tracking-tight text-foreground">
-                Welcome back, {user.name}
+                Welcome back, <span className="bg-gradient-to-r from-amber-700 to-stone-700 bg-clip-text text-transparent font-semibold">{user.name}</span>
               </h2>
               <p className="text-md text-muted-foreground mt-2">
-                Resume an active sandbox or launch a new environment instantly.
+                Resume your recent work or create a new project instantly.
               </p>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8 items-start">
               {/* Left Column: Create Project Form */}
-              <div className="lg:col-span-1 border border-foreground p-6 bg-card">
-                <h3 className="text-lg font-display mb-6 pb-4 border-b border-foreground/10 flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Create Sandbox
-                </h3>
+              <div className="lg:col-span-1 border border-foreground/10 rounded-2xl p-8 bg-card/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(180,83,9,0.04)] transition-all duration-500">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-foreground/5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-600/10 text-amber-700 flex items-center justify-center">
+                    <Plus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold tracking-tight text-foreground">Create a Project</h3>
+                    <p className="text-xs text-muted-foreground">Start a fresh environment</p>
+                  </div>
+                </div>
 
                 {isAnyLoading ? (
-                  <div className="flex flex-col items-center justify-center py-10 bg-foreground/[0.01]">
-                    <Loader2 className="w-8 h-8 animate-spin text-foreground mb-4" />
+                  <div className="flex flex-col items-center justify-center py-10 bg-foreground/[0.01] rounded-xl border border-foreground/5">
+                    <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-4" />
                     <span className="text-sm font-mono font-medium text-foreground">
                       {loadingProjectId
-                        ? `Starting sandbox${dots}`
+                        ? `Starting project${dots}`
                         : loadingStep === 'project'
                           ? `Creating project${dots}`
-                          : `Starting sandbox${dots}`}
+                          : `Starting project${dots}`}
                     </span>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-xs font-mono uppercase text-muted-foreground mb-2">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                         Project Name
                       </label>
                       <input
@@ -244,38 +266,43 @@ export default function SplashScreen({ onSandboxCreated }) {
                         onChange={e => { setTitle(e.target.value); setError(null) }}
                         onKeyDown={e => e.key === 'Enter' && handleCreate()}
                         placeholder="e.g. counter-app"
-                        className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm focus:border-foreground outline-none transition-colors"
+                        className="w-full bg-background/50 border border-foreground/10 rounded-xl px-4 py-3.5 text-sm focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5 outline-none transition-all duration-300 placeholder:text-muted-foreground/40 shadow-inner"
                       />
                     </div>
 
                     <Button
                       onClick={handleCreate}
                       disabled={isAnyLoading}
-                      className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-full cursor-pointer flex items-center justify-center font-medium gap-2"
+                      className="w-full h-12 bg-gradient-to-r from-amber-700 to-stone-700 hover:from-amber-800 hover:to-stone-800 text-white rounded-xl cursor-pointer flex items-center justify-center font-medium gap-2 shadow-lg shadow-amber-700/15 hover:shadow-xl hover:shadow-amber-700/25 transition-all duration-300 hover:-translate-y-0.5"
                     >
-                      Launch Sandbox
+                      Create Project
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
                 )}
 
                 {error && (
-                  <div className="mt-6 p-4 border border-destructive/20 bg-destructive/5 text-destructive text-xs font-mono">
+                  <div className="mt-6 p-4 border border-destructive/20 bg-destructive/5 text-destructive text-xs font-mono rounded-xl">
                     ⚠️ {error}
                   </div>
                 )}
               </div>
 
               {/* Right Column: Recent Projects */}
-              <div className="lg:col-span-2 border border-foreground/10 p-6 bg-card">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-foreground/10">
-                  <h3 className="text-lg font-display flex items-center gap-2">
-                    <Layers className="w-5 h-5" />
-                    My Active Sandboxes
-                  </h3>
+              <div className="lg:col-span-2 border border-foreground/10 rounded-2xl p-8 bg-card/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(180,83,9,0.04)] transition-all duration-500">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-foreground/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-stone-600/10 text-stone-700 flex items-center justify-center">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold tracking-tight text-foreground">Your Projects</h3>
+                      <p className="text-xs text-muted-foreground">Manage and resume active environments</p>
+                    </div>
+                  </div>
                   <button
                     onClick={fetchProjects}
-                    className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all duration-200 cursor-pointer"
                     title="Refresh List"
                   >
                     <RefreshCw className={`w-4 h-4 ${projectsLoading ? 'animate-spin' : ''}`} />
@@ -287,43 +314,46 @@ export default function SplashScreen({ onSandboxCreated }) {
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : projects.length === 0 ? (
-                  <div className="text-center py-16 bg-foreground/[0.01] border border-dashed border-foreground/10">
+                  <div className="text-center py-16 bg-foreground/[0.01] border border-dashed border-foreground/10 rounded-xl">
                     <span className="block text-sm text-muted-foreground mb-2">No active projects found</span>
-                    <span className="text-xs text-muted-foreground">Type a name on the left to spawn your first sandbox.</span>
+                    <span className="text-xs text-muted-foreground">Type a name on the left to create your first project.</span>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-4 overflow-y-auto" style={{ maxHeight: '460px', paddingRight: '4px' }}>
                     {projects.map((project) => (
                       <div
                         key={project._id}
                         onClick={() => !isAnyLoading && handleOpenProject(project._id)}
-                        className={`group border border-foreground/10 p-5 flex flex-col justify-between hover:border-foreground transition-all duration-300 cursor-pointer bg-background relative overflow-hidden ${loadingProjectId === project._id ? 'border-foreground bg-foreground/[0.01]' : ''
+                        className={`group border border-foreground/10 border-t-4 border-t-amber-700/40 rounded-xl p-5 flex flex-col justify-between shadow-sm hover:shadow-md hover:shadow-amber-700/5 hover:border-amber-600/30 hover:border-t-amber-600 hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-card relative overflow-hidden ${loadingProjectId === project._id ? 'border-amber-600 border-t-amber-600 bg-amber-600/[0.01] shadow-md shadow-amber-600/[0.02]' : ''
                           }`}
                       >
                         <div>
                           <div className="flex items-center justify-between mb-3">
-                            <span className="font-mono text-xs text-muted-foreground">
+                            <span className="font-mono text-[10px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded">
                               {project._id.slice(-6).toUpperCase()}
                             </span>
-                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <div className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </div>
                           </div>
-                          <h4 className="text-lg font-display text-foreground group-hover:translate-x-1 transition-transform duration-300">
+                          <h4 className="text-lg font-sans font-semibold text-foreground group-hover:text-amber-700 transition-colors duration-300">
                             {project.title}
                           </h4>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Last updated {new Date(project.updatedAt).toLocaleDateString()}
+                            Last updated {getFormattedDate(project.updatedAt, project.createdAt)}
                           </p>
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-foreground/5 flex items-center justify-between">
-                          <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
-                            <Terminal className="w-3.5 h-3.5" /> Node env
+                          <span className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 bg-foreground/[0.02] px-2.5 py-1 rounded-md border border-foreground/5">
+                            <Terminal className="w-3.5 h-3.5 text-muted-foreground/60" /> Node.js
                           </span>
                           {loadingProjectId === project._id ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-foreground" />
+                            <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
                           ) : (
-                            <span className="text-xs font-medium text-foreground group-hover:underline flex items-center gap-1">
-                              Resume <Play className="w-3 h-3 fill-foreground" />
+                            <span className="text-xs font-semibold text-amber-700 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform duration-300">
+                              Open Project <ArrowRight className="w-3.5 h-3.5" />
                             </span>
                           )}
                         </div>

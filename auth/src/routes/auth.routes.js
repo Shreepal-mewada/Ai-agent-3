@@ -49,7 +49,7 @@ router.get('/google/callback', passport.authenticate('google', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 3600000 // 1 hour
+            maxAge: 360000000 // 1 hour
         };
         console.log('Setting cookie "token" with options:', cookieOptions);
         res.cookie('token', token, cookieOptions);

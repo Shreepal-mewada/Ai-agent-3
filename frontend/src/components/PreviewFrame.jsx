@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 
-export default function PreviewFrame({ previewUrl }) {
+export default function PreviewFrame({ previewUrl, showTerminal, onToggleTerminal }) {
   const iframeRef = useRef(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -49,6 +49,21 @@ export default function PreviewFrame({ previewUrl }) {
           </svg>
         </button>
 
+        {/* Toggle Terminal */}
+        <button onClick={onToggleTerminal}
+          className={`p-1 rounded transition-all duration-200 cursor-pointer flex items-center justify-center ${
+            showTerminal 
+              ? 'text-amber-700 bg-amber-600/10 border border-amber-600/15' 
+              : 'text-muted-foreground hover:text-foreground border border-transparent'
+          }`}
+          style={{ height: '22px', width: '22px' }}
+          title="Toggle Terminal">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </button>
+
         {/* Open in new tab */}
         <a href={previewUrl} target="_blank" rel="noreferrer"
           className="p-1 rounded transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
@@ -69,7 +84,7 @@ export default function PreviewFrame({ previewUrl }) {
           src={previewUrl}
           className="w-full h-full border-0"
           style={{ background: '#fff' }}
-          title="Sandbox Preview"
+          title="Project Preview"
           onLoad={() => setLoading(false)}
         />
       </div>

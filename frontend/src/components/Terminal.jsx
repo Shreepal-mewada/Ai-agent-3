@@ -59,10 +59,10 @@ export default function Terminal({ sandboxId }) {
     fitAddonRef.current = fitAddon
 
     term.writeln('\x1b[30m╔══════════════════════════════════════╗\x1b[0m')
-    term.writeln('\x1b[30m║   \x1b[1mSandbox Terminal\x1b[0m\x1b[30m                  ║\x1b[0m')
+    term.writeln('\x1b[30m║   \x1b[1mProject Terminal\x1b[0m\x1b[30m                  ║\x1b[0m')
     term.writeln('\x1b[30m╚══════════════════════════════════════╝\x1b[0m')
     term.writeln('')
-    term.writeln('\x1b[33mConnecting to sandbox...\x1b[0m')
+    term.writeln('\x1b[33mConnecting to environment...\x1b[0m')
 
     return term
   }, [])
@@ -84,7 +84,7 @@ export default function Terminal({ sandboxId }) {
       socket.on('connect', () => {
         setConnected(true)
         setError(null)
-        term.writeln('\x1b[32m✓ Connected to sandbox shell\x1b[0m')
+        term.writeln('\x1b[32m✓ Connected to environment shell\x1b[0m')
         term.writeln('')
       })
 

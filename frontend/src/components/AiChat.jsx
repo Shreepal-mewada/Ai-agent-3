@@ -78,7 +78,7 @@ export default function AiChat({ sandboxId, onFilesChanged }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hi! I can modify your sandbox project. Describe what you want to build or change, and I\'ll update the code for you.',
+      content: 'Hi! I can modify your project. Describe what you want to build or change, and I\'ll update the code for you.',
       activity: [],
       time: Date.now()
     }
@@ -246,7 +246,7 @@ export default function AiChat({ sandboxId, onFilesChanged }) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={sandboxId ? 'Describe what you want to build…' : 'Create a sandbox first…'}
+            placeholder={sandboxId ? 'Describe what you want to build…' : 'Create a project first…'}
             disabled={!sandboxId || streaming}
             rows={1}
             className="flex-1 resize-none text-sm outline-none bg-transparent"
