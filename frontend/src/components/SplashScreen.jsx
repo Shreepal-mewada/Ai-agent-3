@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Navigation } from './landing/Navigation'
 import { HeroSection } from './landing/HeroSection'
 import { Button } from './ui/button'
-import { Plus, Terminal, RefreshCw, Layers, User, ArrowRight, Play, Loader2, LogIn } from 'lucide-react'
+import { Plus, Terminal, RefreshCw, Layers, User, ArrowRight, Play, Loader2, LogIn, Search, Sparkles, ExternalLink, Clock } from 'lucide-react'
 
 const getFormattedDate = (updatedAt, createdAt) => {
   const d = updatedAt || createdAt;
@@ -37,6 +37,13 @@ export default function SplashScreen({ onSandboxCreated }) {
   // Projects list state
   const [projects, setProjects] = useState([])
   const [projectsLoading, setProjectsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
+
+  // Derived: filtered projects
+  const filteredProjects = projects.filter(p =>
+    p.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   // Fetch current user session on mount
   useEffect(() => {
@@ -193,186 +200,281 @@ export default function SplashScreen({ onSandboxCreated }) {
   const isAnyLoading = loading || loadingProjectId !== null
 
   return (
-    <div className="relative min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-100/20 via-background to-stone-100/30 overflow-x-hidden noise-overlay flex flex-col justify-between">
-      <Navigation
-        user={user}
-        onLogin={handleLogin}
-        onLogout={handleLogout}
-        onStartCreating={() => { }}
-      />
+    <>
+      {/* ── Auth loading ── */}
+      {authLoading && (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <span className="text-sm font-mono text-muted-foreground">Checking authentication...</span>
+        </div>
+      )}
 
-      <div className="flex-1 flex flex-col justify-center pt-20">
-        {authLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
-            <span className="text-sm font-mono text-muted-foreground">Checking authentication...</span>
-          </div>
-        ) : !user ? (
-          /* Show Hero Section when not logged in */
-          <HeroSection
+      {/* ── Not logged in: Landing page ── */}
+      {!authLoading && !user && (
+        <div className="relative min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-100/20 via-background to-stone-100/30 overflow-x-hidden noise-overlay flex flex-col justify-between">
+          <Navigation
             user={user}
             onLogin={handleLogin}
+            onLogout={handleLogout}
             onStartCreating={() => { }}
           />
-        ) : (
-          /* Show Developer Workspace Dashboard directly when logged in */
-          <div className="max-w-[1400px] w-full mx-auto px-6 lg:px-12 py-12 animate-fadeIn">
+          <div className="flex-1 flex flex-col justify-center pt-20">
+            <HeroSection
+              user={user}
+              onLogin={handleLogin}
+              onStartCreating={() => { }}
+            />
+          </div>
+          <footer className="relative py-6 border-t border-foreground/5 bg-background text-center shrink-0">
+            <p className="text-xs text-muted-foreground font-mono">
+              &copy; 2026 Optimus. All systems operational.
+            </p>
+          </footer>
+        </div>
+      )}
+
+      {/* ── Logged in: Lovable-style full-page dashboard ── */}
+      {!authLoading && user && (
+        <div className="min-h-screen bg-background overflow-y-auto animate-fadeIn">
+
+          {/* Top header bar */}
+          <div className="border-b border-foreground/10 bg-background/95 backdrop-blur-sm sticky top-0 z-30">
+            <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+              {/* Logo */}
+              <a href="#" className="flex items-center gap-2 shrink-0">
+                <span className="font-display text-xl tracking-tight">Optimus</span>
+                <span className="text-muted-foreground font-mono text-[10px] mt-0.5">TM</span>
+              </a>
+
+              <div className="flex items-center gap-3">
+                {/* User avatar */}
+                <div className="flex items-center gap-2">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full border border-foreground/10" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-foreground/10 flex items-center justify-center text-xs font-bold">
+                      {user.name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-xs font-medium text-foreground/60 hidden sm:block">{user.name}</span>
+                </div>
+
+                {/* New project button */}
+                <button
+                  onClick={() => setShowNewProjectModal(true)}
+                  disabled={isAnyLoading}
+                  className="flex items-center gap-1.5 bg-foreground text-background hover:bg-foreground/90 active:scale-95 rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  New project
+                </button>
+
+                {/* Sign out */}
+                <button
+                  onClick={handleLogout}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Sign out"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 py-10">
+
+            {/* Prompt bar */}
             <div className="mb-10">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-600/10 text-amber-800 border border-amber-600/20 mb-4 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
-                Developer Workspace
-              </span>
-              <h2 className="text-4xl lg:text-5xl font-display tracking-tight text-foreground">
-                Welcome back, <span className="bg-gradient-to-r from-amber-700 to-stone-700 bg-clip-text text-transparent font-semibold">{user.name}</span>
-              </h2>
-              <p className="text-md text-muted-foreground mt-2">
-                Resume your recent work or create a new project instantly.
-              </p>
+              <div className="relative flex items-center bg-card border border-foreground/12 rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_24px_rgba(0,0,0,0.1)] focus-within:border-foreground/25 transition-all duration-300 px-5 py-4 gap-4">
+                <Sparkles className="w-5 h-5 text-muted-foreground/50 shrink-0" />
+                <input
+                  type="text"
+                  value={title}
+                  onChange={e => { setTitle(e.target.value); setError(null) }}
+                  onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                  placeholder="What do you want to build today?"
+                  className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/35 outline-none border-none font-sans"
+                />
+                <button
+                  onClick={handleCreate}
+                  disabled={isAnyLoading || !title.trim()}
+                  className="flex items-center gap-2 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150 cursor-pointer shrink-0"
+                >
+                  {isAnyLoading && !loadingProjectId
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <ArrowRight className="w-4 h-4" />
+                  }
+                  {isAnyLoading && !loadingProjectId
+                    ? (loadingStep === 'project' ? 'Creating…' : 'Starting…')
+                    : 'Start building'}
+                </button>
+              </div>
+              {error && (
+                <p className="mt-2 text-xs text-destructive font-mono px-1">⚠️ {error}</p>
+              )}
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8 items-start">
-              {/* Left Column: Create Project Form */}
-              <div className="lg:col-span-1 border border-foreground/10 rounded-2xl p-8 bg-card/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(180,83,9,0.04)] transition-all duration-500">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-foreground/5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-600/10 text-amber-700 flex items-center justify-center">
-                    <Plus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold tracking-tight text-foreground">Create a Project</h3>
-                    <p className="text-xs text-muted-foreground">Start a fresh environment</p>
-                  </div>
+            {/* Section header + search */}
+            <div className="flex items-center justify-between mb-5 gap-4">
+              <h2 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">Your projects</h2>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search…"
+                    className="pl-9 pr-4 py-2 text-xs bg-card border border-foreground/10 rounded-lg outline-none focus:border-foreground/25 transition-colors w-44 placeholder:text-muted-foreground/35"
+                  />
                 </div>
-
-                {isAnyLoading ? (
-                  <div className="flex flex-col items-center justify-center py-10 bg-foreground/[0.01] rounded-xl border border-foreground/5">
-                    <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-4" />
-                    <span className="text-sm font-mono font-medium text-foreground">
-                      {loadingProjectId
-                        ? `Starting project${dots}`
-                        : loadingStep === 'project'
-                          ? `Creating project${dots}`
-                          : `Starting project${dots}`}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                        Project Name
-                      </label>
-                      <input
-                        type="text"
-                        value={title}
-                        onChange={e => { setTitle(e.target.value); setError(null) }}
-                        onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                        placeholder="e.g. counter-app"
-                        className="w-full bg-background/50 border border-foreground/10 rounded-xl px-4 py-3.5 text-sm focus:border-amber-600 focus:ring-4 focus:ring-amber-600/5 outline-none transition-all duration-300 placeholder:text-muted-foreground/40 shadow-inner"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleCreate}
-                      disabled={isAnyLoading}
-                      className="w-full h-12 bg-gradient-to-r from-amber-700 to-stone-700 hover:from-amber-800 hover:to-stone-800 text-white rounded-xl cursor-pointer flex items-center justify-center font-medium gap-2 shadow-lg shadow-amber-700/15 hover:shadow-xl hover:shadow-amber-700/25 transition-all duration-300 hover:-translate-y-0.5"
-                    >
-                      Create Project
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-
-                {error && (
-                  <div className="mt-6 p-4 border border-destructive/20 bg-destructive/5 text-destructive text-xs font-mono rounded-xl">
-                    ⚠️ {error}
-                  </div>
-                )}
+                <button
+                  onClick={fetchProjects}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all cursor-pointer"
+                  title="Refresh"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${projectsLoading ? 'animate-spin' : ''}`} />
+                </button>
               </div>
+            </div>
 
-              {/* Right Column: Recent Projects */}
-              <div className="lg:col-span-2 border border-foreground/10 rounded-2xl p-8 bg-card/70 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(180,83,9,0.04)] transition-all duration-500">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-foreground/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-stone-600/10 text-stone-700 flex items-center justify-center">
-                      <Layers className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold tracking-tight text-foreground">Your Projects</h3>
-                      <p className="text-xs text-muted-foreground">Manage and resume active environments</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={fetchProjects}
-                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all duration-200 cursor-pointer"
-                    title="Refresh List"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${projectsLoading ? 'animate-spin' : ''}`} />
-                  </button>
+            {/* Projects grid */}
+            {projectsLoading ? (
+              <div className="flex justify-center items-center py-28">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredProjects.length === 0 && !searchQuery ? (
+              <div className="flex flex-col items-center justify-center py-28 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center mb-4">
+                  <Layers className="w-6 h-6 text-muted-foreground/30" />
                 </div>
-
-                {projectsLoading ? (
-                  <div className="flex justify-center py-16">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : projects.length === 0 ? (
-                  <div className="text-center py-16 bg-foreground/[0.01] border border-dashed border-foreground/10 rounded-xl">
-                    <span className="block text-sm text-muted-foreground mb-2">No active projects found</span>
-                    <span className="text-xs text-muted-foreground">Type a name on the left to create your first project.</span>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-4 overflow-y-auto" style={{ maxHeight: '460px', paddingRight: '4px' }}>
-                    {projects.map((project) => (
-                      <div
-                        key={project._id}
-                        onClick={() => !isAnyLoading && handleOpenProject(project._id)}
-                        className={`group border border-foreground/10 border-t-4 border-t-amber-700/40 rounded-xl p-5 flex flex-col justify-between shadow-sm hover:shadow-md hover:shadow-amber-700/5 hover:border-amber-600/30 hover:border-t-amber-600 hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-card relative overflow-hidden ${loadingProjectId === project._id ? 'border-amber-600 border-t-amber-600 bg-amber-600/[0.01] shadow-md shadow-amber-600/[0.02]' : ''
-                          }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="font-mono text-[10px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded">
-                              {project._id.slice(-6).toUpperCase()}
-                            </span>
-                            <div className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </div>
+                <p className="text-sm font-medium text-foreground mb-1">No projects yet</p>
+                <p className="text-xs text-muted-foreground">Describe what you want to build above</p>
+              </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-28 text-center">
+                <p className="text-sm text-muted-foreground">No projects match "<span className="text-foreground font-medium">{searchQuery}</span>"</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredProjects.map((project, index) => {
+                  const gradients = [
+                    'from-violet-200 via-purple-100 to-fuchsia-200',
+                    'from-blue-200 via-cyan-100 to-teal-200',
+                    'from-amber-200 via-orange-100 to-yellow-200',
+                    'from-emerald-200 via-green-100 to-lime-200',
+                    'from-pink-200 via-rose-100 to-red-200',
+                    'from-sky-200 via-blue-100 to-indigo-200',
+                  ]
+                  const grad = gradients[index % gradients.length]
+                  const isCardLoading = loadingProjectId === project._id
+                  return (
+                    <div
+                      key={project._id}
+                      onClick={() => !isAnyLoading && handleOpenProject(project._id)}
+                      className={`group relative flex flex-col rounded-xl border bg-card overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] ${
+                        isCardLoading
+                          ? 'border-foreground/25 shadow-md'
+                          : 'border-foreground/8 shadow-sm hover:border-foreground/15'
+                      }`}
+                    >
+                      {/* Thumbnail */}
+                      <div className={`relative h-40 bg-gradient-to-br ${grad} overflow-hidden`}>
+                        <div className="absolute inset-0 opacity-[0.15]"
+                          style={{
+                            backgroundImage: 'radial-gradient(circle, #00000022 1px, transparent 1px)',
+                            backgroundSize: '18px 18px',
+                          }}
+                        />
+                        {/* Browser mockup */}
+                        <div className="absolute top-5 left-5 right-5 bg-white/50 backdrop-blur-sm rounded-lg p-2.5 border border-white/60 shadow-sm">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-red-400/80" />
+                            <span className="w-2 h-2 rounded-full bg-amber-400/80" />
+                            <span className="w-2 h-2 rounded-full bg-green-400/80" />
                           </div>
-                          <h4 className="text-lg font-sans font-semibold text-foreground group-hover:text-amber-700 transition-colors duration-300">
-                            {project.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Last updated {getFormattedDate(project.updatedAt, project.createdAt)}
-                          </p>
+                          <div className="h-1.5 bg-white/60 rounded-full w-3/4 mb-1.5" />
+                          <div className="h-1.5 bg-white/40 rounded-full w-1/2" />
                         </div>
-
-                        <div className="mt-6 pt-4 border-t border-foreground/5 flex items-center justify-between">
-                          <span className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 bg-foreground/[0.02] px-2.5 py-1 rounded-md border border-foreground/5">
-                            <Terminal className="w-3.5 h-3.5 text-muted-foreground/60" /> Node.js
-                          </span>
-                          {loadingProjectId === project._id ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/8 transition-colors duration-200 flex items-center justify-center">
+                          {isCardLoading ? (
+                            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3.5 py-2 flex items-center gap-2 shadow">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground/70" />
+                              <span className="text-xs font-medium text-foreground/70">Starting{dots}</span>
+                            </div>
                           ) : (
-                            <span className="text-xs font-semibold text-amber-700 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform duration-300">
-                              Open Project <ArrowRight className="w-3.5 h-3.5" />
-                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-white/90 backdrop-blur-sm rounded-lg px-3.5 py-2 flex items-center gap-2 shadow">
+                              <ExternalLink className="w-3.5 h-3.5 text-foreground/70" />
+                              <span className="text-xs font-medium text-foreground/70">Open</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+
+                      {/* Card body */}
+                      <div className="p-3.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">{project.title}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            {getFormattedDate(project.updatedAt, project.createdAt)}
+                          </p>
+                        </div>
+                        {isCardLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* New Project Modal */}
+          {showNewProjectModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
+              onClick={() => setShowNewProjectModal(false)}
+            >
+              <div
+                className="bg-card border border-foreground/10 rounded-2xl p-8 w-full max-w-md shadow-2xl animate-fadeIn"
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold mb-1">New project</h3>
+                <p className="text-sm text-muted-foreground mb-6">Give your project a name to get started.</p>
+                <input
+                  type="text"
+                  value={title}
+                  autoFocus
+                  onChange={e => { setTitle(e.target.value); setError(null) }}
+                  onKeyDown={e => e.key === 'Enter' && !isAnyLoading && handleCreate()}
+                  placeholder="e.g. my-saas-app"
+                  className="w-full bg-background border border-foreground/10 rounded-xl px-4 py-3 text-sm focus:border-foreground/30 outline-none transition-all mb-4 placeholder:text-muted-foreground/35"
+                />
+                {error && <p className="text-xs text-destructive font-mono mb-3">⚠️ {error}</p>}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowNewProjectModal(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-foreground/10 text-sm font-medium hover:bg-foreground/5 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreate}
+                    disabled={isAnyLoading || !title.trim()}
+                    className="flex-1 py-2.5 rounded-xl bg-foreground text-background text-sm font-medium hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {isAnyLoading && !loadingProjectId && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isAnyLoading && !loadingProjectId
+                      ? (loadingStep === 'project' ? 'Creating…' : 'Starting…')
+                      : 'Create project'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <footer className="relative py-6 border-t border-foreground/5 bg-background text-center shrink-0">
-        <p className="text-xs text-muted-foreground font-mono">
-          &copy; 2026 Optimus. All systems operational.
-        </p>
-      </footer>
-    </div>
+          )}
+        </div>
+      )}
+    </>
   )
 }
