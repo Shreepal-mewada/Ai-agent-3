@@ -44,47 +44,47 @@ export default function FileViewer({ agentBase, filePath }) {
   if (!filePath) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3"
-        style={{ color: '#334155' }}>
+        style={{ color: 'var(--text-muted)' }}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
         </svg>
-        <p className="text-sm">Select a file from the explorer</p>
+        <p className="text-sm font-mono">Select a file from the explorer</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full font-mono">
       {/* File tab bar */}
       <div className="flex items-center gap-2 px-3 shrink-0"
-        style={{ height: '36px', background: '#070b14', borderBottom: '1px solid #1e2d45' }}>
-        <div className="flex items-center gap-2 px-3 py-1 rounded-t"
-          style={{ background: '#0d1424', border: '1px solid #1e2d45', borderBottom: 'none', marginBottom: '-1px' }}>
-          <span className="text-xs" style={{ color: '#94a3b8' }}>
+        style={{ height: '36px', background: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2 px-3 py-1"
+          style={{ background: 'var(--card)', border: '1px solid var(--border)', borderBottom: 'none', marginBottom: '-1px' }}>
+          <span className="text-xs" style={{ color: 'var(--text-primary)' }}>
             {filePath.split('/').pop()}
           </span>
-          <span className="text-xs px-1 rounded"
-            style={{ background: 'rgba(34,211,238,0.08)', color: '#475569' }}>
+          <span className="text-xs px-1 rounded font-mono"
+            style={{ background: 'var(--secondary)', color: 'var(--text-secondary)' }}>
             {getLanguage(filePath)}
           </span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto relative" style={{ background: '#070b14' }}>
+      <div className="flex-1 overflow-auto relative" style={{ background: 'var(--card)' }}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-t-transparent"
-              style={{ borderColor: '#22d3ee', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'var(--foreground)', borderTopColor: 'transparent' }} />
           </div>
         )}
         {error && (
-          <div className="p-6 text-sm" style={{ color: '#ef4444' }}>{error}</div>
+          <div className="p-6 text-sm text-destructive">{error}</div>
         )}
         {content !== null && !loading && (
           <pre className="p-4 text-xs leading-relaxed overflow-auto h-full"
-            style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", "Fira Code", monospace', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            style={{ color: 'var(--foreground)', fontFamily: '"JetBrains Mono", "Fira Code", monospace', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <code>{content}</code>
           </pre>
         )}

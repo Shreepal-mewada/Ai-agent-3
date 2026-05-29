@@ -11,10 +11,10 @@ export default function PreviewFrame({ previewUrl }) {
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full font-mono">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 shrink-0"
-        style={{ height: '36px', background: '#070b14', borderBottom: '1px solid #1e2d45' }}>
+        style={{ height: '36px', background: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
         
         {/* Traffic light dots */}
         <div className="flex items-center gap-1.5 mr-1">
@@ -26,25 +26,22 @@ export default function PreviewFrame({ previewUrl }) {
         {/* URL bar */}
         <div className="flex-1 flex items-center px-3 rounded"
           style={{
-            background: '#0d1424',
-            border: '1px solid #1e2d45',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
             height: '24px'
           }}>
           {loading && (
-            <div className="w-3 h-3 rounded-full border border-t-transparent mr-2 shrink-0"
-              style={{ borderColor: '#22d3ee', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            <div className="w-3 h-3 rounded-full border border-t-transparent mr-2 shrink-0 animate-spin"
+              style={{ borderColor: 'var(--foreground)', borderTopColor: 'transparent' }} />
           )}
-          <span className="text-xs truncate" style={{ color: '#475569', fontFamily: 'monospace' }}>
+          <span className="text-xs truncate" style={{ color: 'var(--text-muted)', fontFamily: 'monospace' }}>
             {previewUrl}
           </span>
         </div>
 
         {/* Refresh */}
         <button onClick={handleRefresh}
-          className="p-1 rounded transition-colors cursor-pointer"
-          style={{ color: '#475569' }}
-          onMouseEnter={e => e.currentTarget.style.color = '#22d3ee'}
-          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+          className="p-1 rounded transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
           title="Refresh preview">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M23 4v6h-6M1 20v-6h6"/>
@@ -54,10 +51,7 @@ export default function PreviewFrame({ previewUrl }) {
 
         {/* Open in new tab */}
         <a href={previewUrl} target="_blank" rel="noreferrer"
-          className="p-1 rounded transition-colors cursor-pointer"
-          style={{ color: '#475569' }}
-          onMouseEnter={e => e.currentTarget.style.color = '#22d3ee'}
-          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+          className="p-1 rounded transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
           title="Open in new tab">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>

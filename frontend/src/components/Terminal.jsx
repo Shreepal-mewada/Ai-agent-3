@@ -17,27 +17,27 @@ export default function Terminal({ sandboxId }) {
 
     const term = new XTerm({
       theme: {
-        background: '#070b14',
-        foreground: '#e2e8f0',
-        cursor: '#22d3ee',
-        cursorAccent: '#070b14',
-        selectionBackground: 'rgba(34,211,238,0.2)',
-        black: '#1e2d45',
+        background: '#faf9f5', // Matches oklch(0.985 0.002 90)
+        foreground: '#1f2022', // Matches oklch(0.12 0.01 60)
+        cursor: '#1f2022',
+        cursorAccent: '#faf9f5',
+        selectionBackground: 'rgba(0,0,0,0.1)',
+        black: '#1f2022',
         red: '#ef4444',
         green: '#10b981',
         yellow: '#f59e0b',
         blue: '#3b82f6',
         magenta: '#a78bfa',
-        cyan: '#22d3ee',
-        white: '#e2e8f0',
-        brightBlack: '#334155',
+        cyan: '#0891b2',
+        white: '#faf9f5',
+        brightBlack: '#7f8c8d',
         brightRed: '#f87171',
         brightGreen: '#34d399',
         brightYellow: '#fbbf24',
         brightBlue: '#60a5fa',
         brightMagenta: '#c4b5fd',
-        brightCyan: '#67e8f9',
-        brightWhite: '#f8fafc',
+        brightCyan: '#22d3ee',
+        brightWhite: '#ffffff',
       },
       fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
       fontSize: 13,
@@ -58,9 +58,9 @@ export default function Terminal({ sandboxId }) {
     termRef.current = term
     fitAddonRef.current = fitAddon
 
-    term.writeln('\x1b[36m╔══════════════════════════════════════╗\x1b[0m')
-    term.writeln('\x1b[36m║   \x1b[1mSandbox Terminal\x1b[0m\x1b[36m                  ║\x1b[0m')
-    term.writeln('\x1b[36m╚══════════════════════════════════════╝\x1b[0m')
+    term.writeln('\x1b[30m╔══════════════════════════════════════╗\x1b[0m')
+    term.writeln('\x1b[30m║   \x1b[1mSandbox Terminal\x1b[0m\x1b[30m                  ║\x1b[0m')
+    term.writeln('\x1b[30m╚══════════════════════════════════════╝\x1b[0m')
     term.writeln('')
     term.writeln('\x1b[33mConnecting to sandbox...\x1b[0m')
 
@@ -134,26 +134,26 @@ export default function Terminal({ sandboxId }) {
   }, [])
 
   return (
-    <div className="flex flex-col h-full"
-      style={{ background: '#070b14' }}>
+    <div className="flex flex-col h-full font-mono"
+      style={{ background: 'var(--card)' }}>
 
       {/* Terminal toolbar */}
       <div className="flex items-center justify-between px-3 shrink-0"
-        style={{ height: '32px', background: '#0d1424', borderBottom: '1px solid #1e2d45' }}>
+        style={{ height: '32px', background: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-muted-foreground" strokeWidth="2">
             <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
           </svg>
-          <span className="text-xs font-medium" style={{ color: '#475569' }}>Terminal</span>
+          <span className="text-xs font-mono font-medium text-muted-foreground">Terminal</span>
         </div>
         <div className="flex items-center gap-2">
           {error && (
-            <span className="text-xs" style={{ color: '#ef4444' }}>{error}</span>
+            <span className="text-xs text-destructive">{error}</span>
           )}
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full"
               style={{ background: connected ? '#10b981' : '#ef4444', boxShadow: `0 0 6px ${connected ? '#10b981' : '#ef4444'}` }} />
-            <span className="text-xs" style={{ color: '#475569' }}>
+            <span className="text-xs font-mono text-muted-foreground">
               {connected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
