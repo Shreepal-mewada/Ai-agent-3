@@ -3,9 +3,8 @@ import { Terminal as XTerm } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { io } from 'socket.io-client'
-import { Terminal as TermIcon, ShieldCheck, AlertCircle } from 'lucide-react'
 
-export default function Terminal({ sandboxId, showToast }) {
+export default function Terminal({ sandboxId }) {
   const containerRef = useRef(null)
   const termRef = useRef(null)
   const fitAddonRef = useRef(null)
@@ -18,33 +17,33 @@ export default function Terminal({ sandboxId, showToast }) {
 
     const term = new XTerm({
       theme: {
-        background: '#0A0D14',
-        foreground: '#F3F4F6',
-        cursor: '#A58B6D',
-        cursorAccent: '#0A0D14',
-        selectionBackground: 'rgba(165, 139, 109, 0.25)',
-        black: '#121620',
-        red: '#9C3D3D',
-        green: '#3D5A45',
-        yellow: '#8E6C3A',
-        blue: '#8C4C4C',
-        magenta: '#8A4A4A',
-        cyan: '#A58B6D',
-        white: '#F3F4F6',
-        brightBlack: '#4B5563',
-        brightRed: '#B85C5C',
-        brightGreen: '#547A60',
-        brightYellow: '#B38E50',
-        brightBlue: '#D27E7B',
-        brightMagenta: '#A66B6B',
-        brightCyan: '#C2B09B',
-        brightWhite: '#FFFFFF',
+        background: '#faf9f5', // Matches oklch(0.985 0.002 90)
+        foreground: '#1f2022', // Matches oklch(0.12 0.01 60)
+        cursor: '#1f2022',
+        cursorAccent: '#faf9f5',
+        selectionBackground: 'rgba(0,0,0,0.1)',
+        black: '#1f2022',
+        red: '#ef4444',
+        green: '#10b981',
+        yellow: '#f59e0b',
+        blue: '#3b82f6',
+        magenta: '#a78bfa',
+        cyan: '#0891b2',
+        white: '#faf9f5',
+        brightBlack: '#7f8c8d',
+        brightRed: '#f87171',
+        brightGreen: '#34d399',
+        brightYellow: '#fbbf24',
+        brightBlue: '#60a5fa',
+        brightMagenta: '#c4b5fd',
+        brightCyan: '#22d3ee',
+        brightWhite: '#ffffff',
       },
-      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-      fontSize: 12,
-      lineHeight: 1.4,
+      fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
+      fontSize: 13,
+      lineHeight: 1.5,
       cursorBlink: true,
-      cursorStyle: 'block',
+      cursorStyle: 'bar',
       scrollback: 5000,
       allowProposedApi: true,
     })
@@ -59,11 +58,11 @@ export default function Terminal({ sandboxId, showToast }) {
     termRef.current = term
     fitAddonRef.current = fitAddon
 
-    term.writeln('\x1b[33m╔══════════════════════════════════════╗\x1b[0m')
-    term.writeln('\x1b[33m║      \x1b[1mAura Agent Sandbox Shell\x1b[0m\x1b[33m        ║\x1b[0m')
-    term.writeln('\x1b[33m╚══════════════════════════════════════╝\x1b[0m')
+    term.writeln('\x1b[30m╔══════════════════════════════════════╗\x1b[0m')
+    term.writeln('\x1b[30m║   \x1b[1mSandbox Terminal\x1b[0m\x1b[30m                  ║\x1b[0m')
+    term.writeln('\x1b[30m╚══════════════════════════════════════╝\x1b[0m')
     term.writeln('')
-    term.writeln('\x1b[33mEstablishing secure telemetry tunnels...\x1b[0m')
+    term.writeln('\x1b[33mConnecting to sandbox...\x1b[0m')
 
     return term
   }, [])
@@ -85,19 +84,19 @@ export default function Terminal({ sandboxId, showToast }) {
       socket.on('connect', () => {
         setConnected(true)
         setError(null)
-        term.writeln('\x1b[32m✓ Connected to container sandbox shell\x1b[0m')
+        term.writeln('\x1b[32m✓ Connected to sandbox shell\x1b[0m')
         term.writeln('')
       })
 
       socket.on('disconnect', () => {
         setConnected(false)
-        term.writeln('\r\n\x1b[33m⚠ Disconnected from terminal shell. Reconnecting...\x1b[0m')
+        term.writeln('\r\n\x1b[33m⚠ Disconnected. Reconnecting...\x1b[0m')
       })
 
       socket.on('connect_error', (err) => {
         setConnected(false)
-        setError('Shell connection failed')
-        term.writeln(`\r\n\x1b[31m✗ Shell connection error: ${err.message}\x1b[0m`)
+        setError('Connection failed')
+        term.writeln(`\r\n\x1b[31m✗ Connection error: ${err.message}\x1b[0m`)
       })
 
       socket.on('terminal-output', (data) => {
@@ -127,7 +126,7 @@ export default function Terminal({ sandboxId, showToast }) {
   useEffect(() => {
     const observer = new ResizeObserver(() => {
       if (fitAddonRef.current) {
-        try { fitAddonRef.current.fit() } catch (_) { }
+        try { fitAddonRef.current.fit() } catch (_) {}
       }
     })
     if (containerRef.current) observer.observe(containerRef.current)
@@ -135,29 +134,33 @@ export default function Terminal({ sandboxId, showToast }) {
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0D14]">
+    <div className="flex flex-col h-full font-mono"
+      style={{ background: 'var(--card)' }}>
 
-      {/* Terminal Toolbar */}
-      <div className="flex items-center justify-between px-3 shrink-0 h-8 bg-surface border-b border-outline/15">
-        <div className="flex items-center gap-1.5">
-          <TermIcon className="w-3.5 h-3.5 text-primary" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Shell Terminal</span>
+      {/* Terminal toolbar */}
+      <div className="flex items-center justify-between px-3 shrink-0"
+        style={{ height: '32px', background: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-muted-foreground" strokeWidth="2">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+          <span className="text-xs font-mono font-medium text-muted-foreground">Terminal</span>
         </div>
-        
         <div className="flex items-center gap-2">
           {error && (
-            <span className="text-[10px] text-error font-semibold">{error}</span>
+            <span className="text-xs text-destructive">{error}</span>
           )}
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
-            <div className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-primary' : 'bg-error'}`} />
-            <span className="text-[9px] font-bold text-on-surface-variant">
-              {connected ? 'CONNECTED' : 'OFFLINE'}
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full"
+              style={{ background: connected ? '#10b981' : '#ef4444', boxShadow: `0 0 6px ${connected ? '#10b981' : '#ef4444'}` }} />
+            <span className="text-xs font-mono text-muted-foreground">
+              {connected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* xterm terminal container */}
+      {/* xterm container */}
       <div ref={containerRef} className="flex-1 overflow-hidden" />
     </div>
   )

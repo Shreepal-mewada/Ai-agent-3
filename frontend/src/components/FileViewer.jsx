@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { FileCode2, Loader2 } from 'lucide-react'
 
 const LANGUAGE_MAP = {
   js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
@@ -12,7 +11,7 @@ function getLanguage(filename) {
   return LANGUAGE_MAP[ext] || 'plaintext'
 }
 
-export default function FileViewer({ agentBase, filePath, showToast }) {
+export default function FileViewer({ agentBase, filePath }) {
   const [content, setContent] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -44,59 +43,52 @@ export default function FileViewer({ agentBase, filePath, showToast }) {
 
   if (!filePath) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 bg-surface text-on-surface-variant">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/20 border border-primary/30">
-          <FileCode2 className="w-6 h-6 text-secondary/70" />
-        </div>
-        <p className="text-xs font-semibold text-primary">No file selected</p>
-        <p className="text-[10px] text-on-surface-variant/60">Select a file from the explorer to edit or inspect.</p>
+      <div className="flex flex-col items-center justify-center h-full gap-3"
+        style={{ color: 'var(--text-muted)' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <p className="text-sm font-mono">Select a file from the explorer</p>
       </div>
     )
   }
 
-  const filename = filePath.split('/').pop()
-  const lang = getLanguage(filePath)
-
   return (
-    <div className="flex flex-col h-full bg-surface text-primary">
-      
-      {/* File Editor Tab Bar */}
-      <div className="flex items-center gap-2 px-3 shrink-0 h-9 bg-background/40 border-b border-outline/15">
-        <div className="flex items-center gap-2 px-3.5 py-1 rounded-t-lg bg-surface border-t border-x border-outline/15 -mb-[1px] relative z-10">
-          <span className="text-xs font-bold text-primary">
-            {filename}
+    <div className="flex flex-col h-full font-mono">
+      {/* File tab bar */}
+      <div className="flex items-center gap-2 px-3 shrink-0"
+        style={{ height: '36px', background: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2 px-3 py-1"
+          style={{ background: 'var(--card)', border: '1px solid var(--border)', borderBottom: 'none', marginBottom: '-1px' }}>
+          <span className="text-xs" style={{ color: 'var(--text-primary)' }}>
+            {filePath.split('/').pop()}
           </span>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-primary/10 text-primary">
-            {lang}
+          <span className="text-xs px-1 rounded font-mono"
+            style={{ background: 'var(--secondary)', color: 'var(--text-secondary)' }}>
+            {getLanguage(filePath)}
           </span>
         </div>
       </div>
 
-      {/* Code Text Content Box */}
-      <div className="flex-1 overflow-auto relative bg-surface">
+      {/* Content */}
+      <div className="flex-1 overflow-auto relative" style={{ background: 'var(--card)' }}>
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface/60 z-20">
-            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'var(--foreground)', borderTopColor: 'transparent' }} />
           </div>
         )}
-        
         {error && (
-          <div className="p-6 text-xs text-error font-semibold">{error}</div>
+          <div className="p-6 text-sm text-destructive">{error}</div>
         )}
-        
         {content !== null && !loading && (
-          <pre className="p-5 text-[11px] leading-relaxed overflow-auto h-full text-primary font-mono select-text"
-            style={{ 
-              fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-              whiteSpace: 'pre-wrap', 
-              wordBreak: 'break-all' 
-            }}
-          >
+          <pre className="p-4 text-xs leading-relaxed overflow-auto h-full"
+            style={{ color: 'var(--foreground)', fontFamily: '"JetBrains Mono", "Fira Code", monospace', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <code>{content}</code>
           </pre>
         )}
       </div>
-
     </div>
   )
 }
