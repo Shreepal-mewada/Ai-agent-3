@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
+import { RotateCw, ExternalLink, Globe, Loader2, Copy } from 'lucide-react'
 
-export default function PreviewFrame({ previewUrl }) {
+export default function PreviewFrame({ previewUrl, showToast }) {
   const iframeRef = useRef(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -10,75 +11,79 @@ export default function PreviewFrame({ previewUrl }) {
     setRefreshKey(k => k + 1)
   }
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(previewUrl)
+    showToast('Preview URL copied!', 'success')
+  }
+
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 shrink-0"
-        style={{ height: '36px', background: '#070b14', borderBottom: '1px solid #1e2d45' }}>
-        
-        {/* Traffic light dots */}
-        <div className="flex items-center gap-1.5 mr-1">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444', opacity: 0.7 }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b', opacity: 0.7 }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981', opacity: 0.7 }} />
+    <div className="flex flex-col h-full w-full bg-surface">
+      
+      {/* Browser Mockup Toolbar */}
+      <div className="flex items-center gap-3 px-3 shrink-0 h-9 bg-background/40 border-b border-outline/15">
+
+        {/* Traffic Light Windows Controls */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="w-2.5 h-2.5 rounded-full bg-error/30 border border-error/40" />
+          <div className="w-2.5 h-2.5 rounded-full bg-on-tertiary-container/30 border border-on-tertiary-container/40" />
+          <div className="w-2.5 h-2.5 rounded-full bg-primary/20 border border-primary/30" />
         </div>
 
-        {/* URL bar */}
-        <div className="flex-1 flex items-center px-3 rounded"
-          style={{
-            background: '#0d1424',
-            border: '1px solid #1e2d45',
-            height: '24px'
-          }}>
+        {/* URL Path Box */}
+        <div className="flex-1 flex items-center bg-surface border border-outline/15 rounded-lg px-2.5 h-6 min-w-0 select-text">
+          <Globe className="w-3 h-3 text-primary/50 mr-2 shrink-0" />
+          
           {loading && (
-            <div className="w-3 h-3 rounded-full border border-t-transparent mr-2 shrink-0"
-              style={{ borderColor: '#22d3ee', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            <Loader2 className="w-3 h-3 text-primary animate-spin mr-2 shrink-0" />
           )}
-          <span className="text-xs truncate" style={{ color: '#475569', fontFamily: 'monospace' }}>
+
+          <span className="text-[10px] font-mono text-[#9CA3AF] truncate">
             {previewUrl}
           </span>
         </div>
 
-        {/* Refresh */}
-        <button onClick={handleRefresh}
-          className="p-1 rounded transition-colors cursor-pointer"
-          style={{ color: '#475569' }}
-          onMouseEnter={e => e.currentTarget.style.color = '#22d3ee'}
-          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
-          title="Refresh preview">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M23 4v6h-6M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-        </button>
+        {/* Action Controls */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button 
+            onClick={handleCopyLink}
+            className="p-1 rounded hover:bg-primary/5 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+            title="Copy URL"
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+          
+          <button 
+            onClick={handleRefresh}
+            className="p-1 rounded hover:bg-primary/5 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+            title="Reload preview"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
 
-        {/* Open in new tab */}
-        <a href={previewUrl} target="_blank" rel="noreferrer"
-          className="p-1 rounded transition-colors cursor-pointer"
-          style={{ color: '#475569' }}
-          onMouseEnter={e => e.currentTarget.style.color = '#22d3ee'}
-          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
-          title="Open in new tab">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-        </a>
+          <a 
+            href={previewUrl} 
+            target="_blank" 
+            rel="noreferrer"
+            className="p-1 rounded hover:bg-primary/5 text-on-surface-variant hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
+            title="Open in new tab"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
 
-      {/* iFrame */}
-      <div className="flex-1 relative">
+      {/* Preview Web Frame */}
+      <div className="flex-1 relative bg-white">
         <iframe
           key={refreshKey}
           ref={iframeRef}
           src={previewUrl}
-          className="w-full h-full border-0"
-          style={{ background: '#fff' }}
+          className="w-full h-full border-0 bg-white"
           title="Sandbox Preview"
           onLoad={() => setLoading(false)}
         />
       </div>
+
     </div>
   )
 }

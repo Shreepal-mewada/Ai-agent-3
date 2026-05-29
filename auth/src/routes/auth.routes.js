@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/google', passport.authenticate('google', {
     session: false,
-    scope: [ 'profile', 'email' ]
+    scope: ['profile', 'email']
 }));
 
 router.get('/google/callback', passport.authenticate('google', {
@@ -24,15 +24,15 @@ router.get('/google/callback', passport.authenticate('google', {
             userId: user._id,
             action: 'google_login',
             timestamp: new Date(),
-            email: emails[ 0 ].value
+            email: emails[0].value
         })
 
         if (!user) {
             user = new User({
                 googleId: id,
-                email: emails[ 0 ].value,
+                email: emails[0].value,
                 name: displayName,
-                avatar: photos[ 0 ].value
+                avatar: photos[0].value
             });
             await user.save();
         }
