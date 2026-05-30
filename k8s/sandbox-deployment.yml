@@ -25,7 +25,7 @@ spec:
               memory: "128Mi"
             requests:
               cpu: "10m"
-              memory: "30Mi"
+              memory: "32Mi"
           livenessProbe:
             httpGet:
               path: /api/sandbox/health

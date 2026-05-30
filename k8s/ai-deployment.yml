@@ -5,7 +5,7 @@ metadata:
   labels:
     name: ai-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ai-server
@@ -20,7 +20,7 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "30Mi"
+              memory: "32Mi"
             limits:
               cpu: "100m"
               memory: "128Mi"
