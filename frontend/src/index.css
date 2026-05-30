@@ -311,3 +311,80 @@
     filter: blur(0);
   }
 }
+
+/* Lovable-inspired Dashboard Utilities (B&W Minimalist Theme) */
+.mesh-gradient {
+  background-color: var(--background, #fafaf9);
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(0, 0, 0, 0.015) 0px, transparent 45%),
+    radial-gradient(at 90% 80%, rgba(0, 0, 0, 0.02) 0px, transparent 45%),
+    radial-gradient(at 50% 50%, rgba(0, 0, 0, 0.015) 0px, transparent 55%),
+    radial-gradient(at 20% 80%, rgba(0, 0, 0, 0.01) 0px, transparent 40%);
+  background-size: 140% 140%;
+  animation: drift 25s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  0% {
+    background-position: 0% 0%, 100% 100%, 50% 50%, 10% 80%;
+  }
+  50% {
+    background-position: 25% 15%, 75% 85%, 45% 55%, 15% 75%;
+  }
+  100% {
+    background-position: 0% 0%, 100% 100%, 50% 50%, 10% 80%;
+  }
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.5rem;
+  color: var(--muted-foreground, #71717a);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-item:hover {
+  color: var(--foreground, #09090b);
+  background-color: rgba(0, 0, 0, 0.035);
+}
+
+.nav-item.active {
+  color: var(--foreground, #09090b);
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--card, #ffffff);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+.card-hover:hover {
+  transform: translateY(-2px) scale(1.015);
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

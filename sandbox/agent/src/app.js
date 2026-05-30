@@ -7,6 +7,7 @@ import http from 'http';
 import pty from 'node-pty';
 import os from 'os';
 import cors from 'cors';
+import net from 'net';
 
 
 const WORKING_DIR = '/workspace';
@@ -36,6 +37,24 @@ app.get('/', (req, res) => {
         message: 'Hello from sandbox agent!',
         status: 'success',
     });
+});
+
+app.get('/preview-status', (req, res) => {
+    const client = new net.Socket();
+    client.setTimeout(1000);
+    client.on('connect', () => {
+        client.end();
+        res.status(200).json({ ready: true });
+    })
+    .on('timeout', () => {
+        client.destroy();
+        res.status(503).json({ ready: false, error: 'timeout' });
+    })
+    .on('error', (err) => {
+        client.destroy();
+        res.status(503).json({ ready: false, error: err.message });
+    });
+    client.connect(5173, '127.0.0.1');
 });
 
 

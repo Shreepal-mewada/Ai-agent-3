@@ -74,118 +74,30 @@ function parseActivityLine(line) {
   return { type: 'info', text: line }
 }
 
-export default function AiChat({ sandboxId, onFilesChanged }) {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Hi! I can modify your project. Describe what you want to build or change, and I\'ll update the code for you.',
-      activity: [],
-      time: Date.now()
-    }
-  ])
+export default function AiChat({ sandboxId, messages, streaming, onSendMessage }) {
   const [input, setInput] = useState('')
-  const [streaming, setStreaming] = useState(false)
   const bottomRef = useRef(null)
-  const esRef = useRef(null)
   const textareaRef = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const sendMessage = useCallback(async () => {
+  const handleSend = () => {
     const text = input.trim()
     if (!text || streaming || !sandboxId) return
 
     setInput('')
-    setStreaming(true)
-
-    const userMsg = { role: 'user', content: text, activity: [], time: Date.now() }
-    setMessages(prev => [...prev, userMsg])
-
-    // Add placeholder AI message
-    const aiMsgId = Date.now() + 1
-    setMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '', activity: [], time: Date.now(), pending: true }])
-
-    let aiContent = ''
-    let activityLines = []
-
-    try {
-      // Use fetch with SSE manually
-      const response = await fetch('/api/ai/invoke', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ message: text, projectId: sandboxId })
-      })
-
-      if (!response.ok) throw new Error(`Server error: ${response.status}`)
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      const updateMsg = () => {
-        setMessages(prev => prev.map(m =>
-          m.id === aiMsgId
-            ? { ...m, content: aiContent || '…', activity: [...activityLines], pending: !aiContent }
-            : m
-        ))
-      }
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop()
-
-        for (const line of lines) {
-          if (!line.trim()) continue
-          const parsed = parseActivityLine(line)
-          if (parsed) {
-            activityLines = [...activityLines, parsed]
-            // If looks like final AI text response
-            if (parsed.type === 'info' && line.length > 30) {
-              aiContent = line
-            }
-          }
-          updateMsg()
-        }
-      }
-
-      // If no textual content came through, construct a summary
-      if (!aiContent) {
-        const updates = activityLines.filter(l => l.type === 'success')
-        aiContent = updates.length
-          ? 'Done! Files have been updated successfully.'
-          : 'Changes applied to your project.'
-      }
-
-      setMessages(prev => prev.map(m =>
-        m.id === aiMsgId
-          ? { ...m, content: aiContent, activity: activityLines, pending: false }
-          : m
-      ))
-
-      // Trigger file explorer refresh
-      onFilesChanged?.()
-    } catch (err) {
-      setMessages(prev => prev.map(m =>
-        m.id === aiMsgId
-          ? { ...m, content: `Error: ${err.message}`, activity: activityLines, pending: false }
-          : m
-      ))
-    } finally {
-      setStreaming(false)
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
     }
-  }, [input, streaming, sandboxId, onFilesChanged])
+    onSendMessage(text)
+  }
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      handleSend()
     }
   }
 
@@ -263,7 +175,7 @@ export default function AiChat({ sandboxId, onFilesChanged }) {
             }}
           />
           <button
-            onClick={sendMessage}
+            onClick={handleSend}
             disabled={!input.trim() || !sandboxId || streaming}
             className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer"
             style={{

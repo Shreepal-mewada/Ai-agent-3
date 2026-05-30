@@ -41,15 +41,15 @@ router.get('/google/callback', passport.authenticate('google', {
             email: emails[ 0 ].value
         });
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // Generate JWT token — valid for 30 days
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-        // Set token in cookie
+        // Set token in cookie — 30 days in ms
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 360000000 // 1 hour
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
         };
         console.log('Setting cookie "token" with options:', cookieOptions);
         res.cookie('token', token, cookieOptions);
@@ -83,11 +83,22 @@ router.get('/me', async (req, res) => {
             return res.status(200).json({ isAuthenticated: false, user: null });
         }
 
+        // Rolling refresh: reissue a fresh 30-day token on every /me call
+        // so active users are never forcibly logged out
+        const freshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+        res.cookie('token', freshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
         console.log('User authenticated successfully:', user.email);
         return res.status(200).json({ isAuthenticated: true, user });
     } catch (err) {
         console.error('Error verifying token/user in /me:', err.message);
         return res.status(200).json({ isAuthenticated: false, user: null });
+
     }
 });
 

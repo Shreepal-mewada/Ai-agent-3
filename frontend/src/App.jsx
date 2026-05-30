@@ -6,10 +6,21 @@ import PreviewFrame from './components/PreviewFrame'
 import FileViewer from './components/FileViewer'
 import Terminal from './components/Terminal'
 import AiChat from './components/AiChat'
+import LoadingScreen from './components/LoadingScreen'
+
+function parseActivityLine(line) {
+  if (!line.trim()) return null
+  if (line.startsWith('Reading files')) return { type: 'reading', text: line }
+  if (line.startsWith('Updating files')) return { type: 'updating', text: line }
+  if (line.toLowerCase().includes('success')) return { type: 'success', text: line }
+  return { type: 'info', text: line }
+}
 
 export default function App() {
   // Sandbox state
   const [sandbox, setSandbox] = useState(null) // { sandboxId, previewUrl, agentBase }
+  const [sandboxReady, setSandboxReady] = useState(false)
+  const [loadingStatus, setLoadingStatus] = useState('')
   const [status, setStatus] = useState('ready')
 
   // UI state
@@ -18,22 +29,145 @@ export default function App() {
   const [fileRefreshKey, setFileRefreshKey] = useState(0)
   const [showTerminal, setShowTerminal] = useState(false)
 
+  // AI Chat state (lifted)
+  const [aiMessages, setAiMessages] = useState([
+    {
+      role: 'assistant',
+      content: "Hi! I can modify your project. Describe what you want to build or change, and I'll update the code for you.",
+      activity: [],
+      time: Date.now()
+    }
+  ])
+  const [aiStreaming, setAiStreaming] = useState(false)
+
   // Terminal resize
   const [terminalHeight, setTerminalHeight] = useState(220)
   const isDragging = useRef(false)
   const dragStartY = useRef(0)
   const dragStartH = useRef(0)
 
-
-  const handleSandboxCreated = useCallback((data) => {
-    const agentBase = `http://${data.sandboxId}.agent.localhost`
-    setSandbox({ sandboxId: data.sandboxId, previewUrl: data.previewUrl, agentBase })
-    setStatus('ready')
-  }, [])
-
   const handleFilesChanged = useCallback(() => {
     setFileRefreshKey(k => k + 1)
   }, [])
+
+  const sendAiMessage = useCallback(async (text, customSandboxId = null) => {
+    const activeSandboxId = customSandboxId || sandbox?.sandboxId
+    if (!text || !activeSandboxId) return
+
+    setAiStreaming(true)
+
+    const userMsg = { role: 'user', content: text, activity: [], time: Date.now() }
+    setAiMessages(prev => [...prev, userMsg])
+
+    const aiMsgId = Date.now() + 1
+    setAiMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '', activity: [], time: Date.now(), pending: true }])
+
+    let aiContent = ''
+    let activityLines = []
+
+    try {
+      const response = await fetch('/api/ai/invoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ message: text, projectId: activeSandboxId })
+      })
+
+      if (!response.ok) throw new Error(`Server error: ${response.status}`)
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      const updateMsg = () => {
+        setAiMessages(prev => prev.map(m =>
+          m.id === aiMsgId
+            ? { ...m, content: aiContent || '…', activity: [...activityLines], pending: !aiContent }
+            : m
+        ))
+      }
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
+
+        for (const line of lines) {
+          if (!line.trim()) continue
+          const parsed = parseActivityLine(line)
+          if (parsed) {
+            activityLines = [...activityLines, parsed]
+            if (parsed.type === 'info' && line.length > 30) {
+              aiContent = line
+            }
+          }
+          updateMsg()
+        }
+      }
+
+      if (!aiContent) {
+        const updates = activityLines.filter(l => l.type === 'success')
+        aiContent = updates.length
+          ? 'Done! Files have been updated successfully.'
+          : 'Changes applied to your project.'
+      }
+
+      setAiMessages(prev => prev.map(m =>
+        m.id === aiMsgId
+          ? { ...m, content: aiContent, activity: activityLines, pending: false }
+          : m
+      ))
+
+      handleFilesChanged()
+    } catch (err) {
+      setAiMessages(prev => prev.map(m =>
+        m.id === aiMsgId
+          ? { ...m, content: `Error: ${err.message}`, activity: activityLines, pending: false }
+          : m
+      ))
+    } finally {
+      setAiStreaming(false)
+    }
+  }, [sandbox, handleFilesChanged])
+
+  const handleSandboxCreated = useCallback((data, initialPrompt = '') => {
+    const agentBase = `http://${data.sandboxId}.agent.localhost`
+    setSandbox({ sandboxId: data.sandboxId, previewUrl: data.previewUrl, agentBase })
+    setSandboxReady(false)
+    setLoadingStatus('Initializing workspace...')
+
+    // If there is an initial prompt, trigger it immediately in the background
+    if (initialPrompt && initialPrompt.trim()) {
+      sendAiMessage(initialPrompt, data.sandboxId)
+    }
+
+    // Polling interval to check preview server readiness
+    let attempts = 0
+    const interval = setInterval(async () => {
+      attempts++
+      try {
+        const res = await fetch(`${agentBase}/preview-status`)
+        if (res.ok) {
+          const statusData = await res.json()
+          if (statusData.ready) {
+            clearInterval(interval)
+            setSandboxReady(true)
+            setLoadingStatus('Ready!')
+          }
+        }
+      } catch (err) {
+        // Agent container not started yet
+      }
+      
+      if (attempts > 90) { // 90 seconds timeout
+        clearInterval(interval)
+        setSandboxReady(true)
+      }
+    }, 1000)
+  }, [sendAiMessage])
 
   const handleFileSelect = useCallback((path) => {
     setActiveFile(path)
@@ -64,6 +198,16 @@ export default function App() {
   // Landing / splash
   if (!sandbox) {
     return <SplashScreen onSandboxCreated={handleSandboxCreated} />
+  }
+
+  if (!sandboxReady) {
+    return (
+      <LoadingScreen
+        messages={aiMessages}
+        streaming={aiStreaming}
+        loadingStatus={loadingStatus}
+      />
+    )
   }
 
   const { sandboxId, previewUrl, agentBase } = sandbox
@@ -156,7 +300,9 @@ export default function App() {
         <div className="shrink-0 overflow-hidden" style={{ width: '340px' }}>
           <AiChat
             sandboxId={sandboxId}
-            onFilesChanged={handleFilesChanged}
+            messages={aiMessages}
+            streaming={aiStreaming}
+            onSendMessage={sendAiMessage}
           />
         </div>
       </div>
