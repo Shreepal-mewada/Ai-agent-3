@@ -8,6 +8,7 @@ import pty from 'node-pty';
 import os from 'os';
 import cors from 'cors';
 import net from 'net';
+import AdmZip from 'adm-zip';
 
 
 const WORKING_DIR = '/workspace';
@@ -259,6 +260,57 @@ app.post("/create-files", async (req, res) => {
         results,
     });
 })
+
+
+/**
+ * @route GET /export
+ * @description Bundles all files in the workspace (excluding node_modules, .git, dist) into a ZIP archive and streams it to the user.
+ */
+app.get("/export", async (req, res) => {
+    const listFiles = async (dir, baseDir) => {
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        const files = [];
+
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            const relativePath = path.relative(baseDir, fullPath);
+
+            // Exclude certain directories
+            if (entry.isDirectory() && [ 'node_modules', '.git', 'dist' ].includes(entry.name)) {
+                continue;
+            }
+
+            if (entry.isDirectory()) {
+                files.push(...await listFiles(fullPath, baseDir));
+            } else {
+                files.push(relativePath);
+            }
+        }
+
+        return files;
+    };
+
+    try {
+        const files = await listFiles(WORKING_DIR, WORKING_DIR);
+        const zip = new AdmZip();
+
+        for (const file of files) {
+            const filePath = path.join(WORKING_DIR, file);
+            const content = await fs.promises.readFile(filePath);
+            zip.addFile(file, content);
+        }
+
+        const zipBuffer = zip.toBuffer();
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', 'attachment; filename=project.zip');
+        res.send(zipBuffer);
+    } catch (err) {
+        res.status(500).json({
+            message: `Error exporting project: ${err.message}`,
+            status: 'error',
+        });
+    }
+});
 
 
 export default httpServer;

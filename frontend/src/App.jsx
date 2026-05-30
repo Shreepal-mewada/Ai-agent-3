@@ -174,6 +174,29 @@ export default function App() {
     setActiveTab('files')
   }, [])
 
+  const handleExportWorkspace = useCallback(async () => {
+    if (!sandbox?.sandboxId || !sandbox?.agentBase) return
+    setStatus('loading')
+    try {
+      const res = await fetch(`${sandbox.agentBase}/export`)
+      if (!res.ok) throw new Error(`Export failed: ${res.statusText}`)
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `project-${sandbox.sandboxId.slice(0, 8)}.zip`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      setStatus('ready')
+    } catch (err) {
+      console.error("Export workspace error:", err)
+      setStatus('error')
+      alert("Failed to export project: " + err.message)
+    }
+  }, [sandbox])
+
   // Drag to resize terminal
   const handleDragStart = (e) => {
     isDragging.current = true
@@ -222,6 +245,7 @@ export default function App() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         status={status}
+        onExport={handleExportWorkspace}
       />
 
       {/* Main layout */}

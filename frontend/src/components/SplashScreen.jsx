@@ -16,6 +16,7 @@ import {
   Sparkles,
   ExternalLink,
   Clock,
+  Download,
   Home,
   Compass,
   Plug,
@@ -292,6 +293,39 @@ export default function SplashScreen({ onSandboxCreated }) {
       setError(err.message || "Failed to create project");
       setLoading(false);
       setLoadingStep("");
+    }
+  };
+
+  const handleExportProject = async (projectId, projectTitle) => {
+    showToast(`Preparing export for ${projectTitle}...`);
+    try {
+      const res = await fetch(`/api/sandbox/project/${projectId}/export`, {
+        credentials: "include"
+      });
+      
+      if (!res.ok) {
+        let errMsg = "Export failed";
+        try {
+          const errData = await res.json();
+          errMsg = errData.message || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${projectTitle.replace(/[^a-zA-Z0-9-_]/g, "_")}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast("Project exported successfully!");
+    } catch (err) {
+      console.error("Export error:", err);
+      setError(err.message || "Failed to export project");
+      showToast("Failed to export project.");
     }
   };
 
@@ -797,8 +831,19 @@ export default function SplashScreen({ onSandboxCreated }) {
                                 </span>
                               </p>
                             </div>
-                            {isCardLoading && (
+                            {isCardLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin text-foreground/70 shrink-0" />
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExportProject(project._id, project.title);
+                                }}
+                                className="p-2 rounded-xl hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-all cursor-pointer shrink-0"
+                                title="Export Project as ZIP"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
                             )}
                           </div>
                         </div>
