@@ -15,7 +15,7 @@ spec:
         app: auth
     spec:
       containers:
-        - image: auth
+        - image: 537213051669.dkr.ecr.ap-southeast-1.amazonaws.com/auth
           imagePullPolicy: IfNotPresent
           name: auth-container
           resources:
@@ -67,6 +67,10 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: JWT_SECRET
+            - name: GOOGLE_CALLBACK_URL
+              value: "https://d3bi9xng69q77n.cloudfront.net/api/auth/google/callback"
+            - name: FRONTEND_URL
+              value: "https://d3bi9xng69q77n.cloudfront.net"
           ports:
             - containerPort: 3000
               name: auth-http

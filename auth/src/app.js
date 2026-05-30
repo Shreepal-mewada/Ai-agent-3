@@ -15,15 +15,27 @@ const app = express();
 app.use(morgan('dev'));
 app.use(cookies());
 app.use(passport.initialize());
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://d3bi9xng69q77n.cloudfront.net"
+];
+
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost/api/auth/google/callback"
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback",
+    proxy: true
 }, (accessToken, refreshToken, profile, done) => {
     // Here you would typically find or create a user in your database
     // For this example, we'll just return the profile

@@ -7,12 +7,19 @@ import jwt from "jsonwebtoken";
 const router = Router();
 
 
-router.get('/google', passport.authenticate('google', {
+const noCache = (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+};
+
+router.get('/google', noCache, passport.authenticate('google', {
     session: false,
     scope: ['profile', 'email']
 }));
 
-router.get('/google/callback', passport.authenticate('google', {
+router.get('/google/callback', noCache, passport.authenticate('google', {
     session: false,
     failureRedirect: '/'
 }), async (req, res) => {
@@ -53,8 +60,12 @@ router.get('/google/callback', passport.authenticate('google', {
         };
         console.log('Setting cookie "token" with options:', cookieOptions);
         res.cookie('token', token, cookieOptions);
-        console.log('Redirecting to http://localhost:5173');
-        res.redirect('http://localhost:5173'); // Redirect to your frontend after successful login
+        const isLocal = req.headers.host && (req.headers.host.includes('localhost') || req.headers.host.includes('127.0.0.1'));
+        const frontendUrl = process.env.FRONTEND_URL || (isLocal
+            ? 'http://localhost:5173'
+            : `https://${req.headers.host}`);
+        console.log('Redirecting to ' + frontendUrl);
+        res.redirect(frontendUrl); // Redirect to your frontend after successful login
     } catch (err) {
         console.error('Error during Google authentication:', err);
         res.redirect('/'); // Redirect to your frontend on error
@@ -62,7 +73,7 @@ router.get('/google/callback', passport.authenticate('google', {
 });
 
 // Get current logged in user profile
-router.get('/me', async (req, res) => {
+router.get('/me', noCache, async (req, res) => {
     console.log('--- /api/auth/me request received ---');
     console.log('NODE_ENV:', process.env.NODE_ENV);
     console.log('Cookies:', req.cookies);
